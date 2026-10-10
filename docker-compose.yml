@@ -1,0 +1,79 @@
+services:
+  spark-master:
+    image: apache/spark:latest
+    container_name: spark-master
+    hostname: spark-master
+    ports:
+      - "8080:8080" # Spark Master Web UI
+      - "7077:7077" # Spark Master Cluster Communication
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+    volumes:
+      - ./spark/apps:/opt/spark/apps
+      - ./spark/data:/opt/spark/data
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+
+  spark-worker-1:
+    image: apache/spark:latest
+    container_name: spark-worker-1
+    hostname: spark-worker-1
+    depends_on:
+      - spark-master
+    ports:
+      - "8081:8081" # Spark Worker Web UI
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+    volumes:
+      - ./spark/apps:/opt/spark/apps
+      - ./spark/data:/opt/spark/data
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+
+  spark-worker-2:
+    image: apache/spark:latest
+    container_name: spark-worker-2
+    hostname: spark-worker-2
+    depends_on:
+      - spark-master
+    ports:
+      - "8082:8081" # Bound to 8082 on local machine to avoid conflicts
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+    volumes:
+      - ./spark/apps:/opt/spark/apps
+      - ./spark/data:/opt/spark/data
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+
+  seaweedfs:
+    image: chrislusf/seaweedfs
+    command: >
+      server -dir=/data
+      -master.volumeSizeLimitMB=1024
+      -filer
+      -s3 -s3.config=/etc/seaweedfs/s3.json
+    ports:
+      - "127.0.0.1:9333:9333"   # master UI/API
+      - "127.0.0.1:9080:8080"   # volume server
+      - "127.0.0.1:9888:8888"   # filer UI/API
+      - "127.0.0.1:8333:8333"   # S3 API
+    volumes:
+      - ./seaweed-data:/data
+      - ./s3.json:/etc/seaweedfs/s3.json:ro
+    restart: unless-stopped
+
+  
+  elasticmq:
+    image: softwaremill/elasticmq-native:latest
+    container_name: elasticmq
+    restart: unless-stopped
+    ports:
+      - "9324:9324" # SQS REST API Endpoint
+      - "9325:9325" # Performance / Management UI (ElasticMQ Insight)
+    volumes:
+      - ./elasticmq.conf:/opt/elasticmq.conf
+    command: -config-file /opt/elasticmq.conf

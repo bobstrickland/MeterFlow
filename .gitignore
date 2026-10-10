@@ -2,3 +2,6 @@
 __pycache__/
 .pytest_cache/
 *.csv
+seaweed-data
+spark/data
+spark/s*

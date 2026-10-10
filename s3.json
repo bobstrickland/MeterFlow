@@ -1,0 +1,11 @@
+{
+  "identities": [
+    {
+      "name": "meterflow",
+      "credentials": [
+        { "accessKey": "CHANGE_ME", "secretKey": "CHANGE_ME_TOO" }
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

@@ -1,9 +1,10 @@
 import hashlib
+import pytest
 from pathlib import Path
 from meterflow.generate import generateReadings
 
 
-def test_same_output(tmp_path, monkeypatch):
+def test_same_output(tmp_path:str, monkeypatch:pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(tmp_path)
 
     file_path:Path = Path("output.csv")

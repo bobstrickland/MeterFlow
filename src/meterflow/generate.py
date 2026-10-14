@@ -4,7 +4,7 @@ from datetime import datetime , timedelta, timezone
 from collections import deque
 
 randomSeed:int = 233
-fileName:str = "output.csv"
+
 
 class meter:
     def __init__(self, id:int, currentTime:datetime):
@@ -29,11 +29,11 @@ class meter:
     def getReading(self, currentTime:datetime) -> float:
         currentTime = currentTime.replace(second=0, microsecond=0)
         while (currentTime >= self.currentTime+timedelta(minutes=15)):
-            self.reading = self.reading + random.uniform(0,30)
+            self.reading = self.reading + random.uniform(0,.4)
             if (self.currentTime.hour in (16, 17, 18, 19, 20)):
-                self.reading = self.reading + random.uniform(0,30)
+                self.reading = self.reading + random.uniform(0,.45)
             if (self.currentTime.hour in (17, 18)):
-                self.reading = self.reading + random.uniform(0,30)
+                self.reading = self.reading + random.uniform(0,.35)
             self.currentTime = self.currentTime+timedelta(minutes=15)
         return self.reading;
 
@@ -61,42 +61,46 @@ def generateReadingsForGivenTime(currentDatetime:datetime, meterList: list[meter
     for themeter in meterList:
         themeter.getReading(currentDatetime)
 
-def printHeaders():
+def printHeaders(fileName:str):
     with open(fileName, "w", encoding="utf-8") as f:
         f.write("reading_id,meter_id,interval_start,register_kwh,read_type,received_at,gateway_id,gateway_seq,quality_flag,schema_version")
 
-def appendLine(line:str):
+def appendLine(line:str, fileName:str):
     with open(fileName, "a", encoding="utf-8") as f:
         f.write(line)
 
-def sampleForDupeStack(line:str, dupeStack: deque[str]):
+def sampleForDupeStack(line:str, dupeStack: deque[str], fileName:str):
     if (random.randint(0,1000) < 2):
         dupeStack.append(line)
     if (dupeStack and random.randint(0,300) == 0):
-        appendLine(dupeStack.pop())
+        appendLine(dupeStack.pop(), fileName)
 
-def printMeters(requestTime:datetime, gateway:Gateway, meterList: list[meter], dupeStack: deque[str]):
+def printMeters(requestTime:datetime, gateway:Gateway, meterList: list[meter], dupeStack: deque[str], fileName:str):
     with open(fileName, "a", encoding="utf-8") as f:
         for m in meterList:
             line:str = f"\n{m.printMeter(requestTime, gateway.getId(), gateway.getSequence())}"
             f.write(line)
-            sampleForDupeStack(line, dupeStack)
+            sampleForDupeStack(line, dupeStack, fileName)
 
-def generateReadings():
-    random.seed(randomSeed)
+def generateReadings(number_of_meters:int,number_of_days:int, fileName:str, days_offset:int = 0):
     meterList: list[meter] = list()
     dupeStack: deque[str] = deque()
-    currentDatetime:datetime = datetime.now(tz=timezone.utc).replace(hour=0, minute=15, second=0, microsecond=0)
+    currentDatetime:datetime = datetime.now(tz=timezone.utc) \
+        .replace(hour=0, minute=15, second=0, microsecond=0) \
+        +timedelta(days=days_offset)
     gateway:Gateway = Gateway("G001")
-    printHeaders()
+    printHeaders(fileName)
     print(currentDatetime)
-    for i in range(50):
+    for i in range(number_of_meters):
         newMeter:meter = meter(i, currentDatetime)
         meterList.append(newMeter)
-    for i in range(192):
+    for i in range(number_of_days*96):
         generateReadingsForGivenTime(currentDatetime, meterList)
-        printMeters(currentDatetime, gateway, meterList, dupeStack)
+        printMeters(currentDatetime, gateway, meterList, dupeStack, fileName)
         currentDatetime = currentDatetime+timedelta(minutes=15)
 
 if __name__ == "__main__":
-    sys.exit(generateReadings())
+    random.seed(randomSeed)
+    for i in range(21) :
+        generateReadings(10000,1, f"output{i:02d}.csv", i)
+    sys.exit()

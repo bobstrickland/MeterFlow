@@ -6,12 +6,24 @@ services:
     ports:
       - "8080:8080" # Spark Master Web UI
       - "7077:7077" # Spark Master Cluster Communication
+      - "127.0.0.1:15002:15002" # Spark Connect Communication
     environment:
       - SPARK_NO_DAEMONIZE=true
+      - SPARK_DIST_CLASSPATH=/opt/extra-jars/*
+      - SPARK_DAEMON_MEMORY=512m
     volumes:
       - ./spark/apps:/opt/spark/apps
       - ./spark/data:/opt/spark/data
-    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+      - ./spark-jars:/opt/extra-jars:ro
+      - ./spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./spark/output:/opt/spark/output
+    command: 
+      - sh
+      - -c
+      - |
+        /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master &
+        sleep 5
+        exec /opt/spark/sbin/start-connect-server.sh --master spark://spark-master:7077
 
   spark-worker-1:
     image: apache/spark:latest
@@ -26,9 +38,15 @@ services:
       - SPARK_MASTER=spark://spark-master:7077
       - SPARK_WORKER_CORES=2
       - SPARK_WORKER_MEMORY=2G
+      - SPARK_DIST_CLASSPATH=/opt/extra-jars/*
+      - AWS_ACCESS_KEY_ID=CHANGE_ME
+      - AWS_SECRET_ACCESS_KEY=CHANGE_ME_TOO
     volumes:
       - ./spark/apps:/opt/spark/apps
       - ./spark/data:/opt/spark/data
+      - ./spark-jars:/opt/extra-jars:ro
+      - ./spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./spark/output:/opt/spark/output
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
 
   spark-worker-2:
@@ -44,9 +62,14 @@ services:
       - SPARK_MASTER=spark://spark-master:7077
       - SPARK_WORKER_CORES=2
       - SPARK_WORKER_MEMORY=2G
+      - SPARK_DIST_CLASSPATH=/opt/extra-jars/*
+      - AWS_ACCESS_KEY_ID=CHANGE_ME
+      - AWS_SECRET_ACCESS_KEY=CHANGE_ME_TOO
     volumes:
       - ./spark/apps:/opt/spark/apps
       - ./spark/data:/opt/spark/data
+      - ./spark-jars:/opt/extra-jars:ro
+      - ./spark/output:/opt/spark/output
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
 
   seaweedfs:

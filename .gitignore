@@ -4,4 +4,7 @@ __pycache__/
 *.csv
 seaweed-data
 spark/data
+spark/output
 spark/s*
+*.jar
+spark/apps

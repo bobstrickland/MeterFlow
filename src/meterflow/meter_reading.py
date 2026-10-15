@@ -55,6 +55,13 @@ class InvalidMeterReading:
     error:str
 
 
+@dataclass(frozen=True)
+class MeterAccount:
+    meter_id:str
+    account_number:str
+    rate_plan:str
+    effective_date:datetime
+    effective_to:datetime
 
 
     

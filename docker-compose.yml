@@ -69,6 +69,7 @@ services:
       - ./spark/apps:/opt/spark/apps
       - ./spark/data:/opt/spark/data
       - ./spark-jars:/opt/extra-jars:ro
+      - ./spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
       - ./spark/output:/opt/spark/output
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
 

@@ -18,16 +18,18 @@ def getRatePlan() -> str:
         return "Time-Of-Use"
 
 
-def scramble_id(counter_id: int) -> int:
+def scramble_id(counter_id: int, digits:int) -> int:
     PRIME = 7465321871
-    MOD = 10**10
+    MOD = 10**digits
     for _ in range(4):
         counter_id = (counter_id * PRIME + 1234567891) % MOD
         counter_id = counter_id ^ 0x5555555555
     return (counter_id % MOD)
 
 def getAccountNumber(accountNumberCounter:int) -> str:
-    return f"A{scramble_id(accountNumberCounter)}"
+    digits:int = 10
+    acc_num = f"A{scramble_id(accountNumberCounter, digits):0{digits}}"
+    return f"{acc_num[:3]}-{acc_num[3:digits]}-{acc_num[digits:]}"
 
 
 
